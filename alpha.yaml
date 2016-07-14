@@ -1,0 +1,10 @@
+--- 
+Wordpress:
+  - 
+    title: "Unsafe SQL queries"
+    check: |
+      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$(?!([a-zA-Z0-9_]{0,6})db)(.*?\);)
+  -
+    title: "Unsafe SQL queries (Strict)"
+    check: |
+      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$_(GET|POST|PUT|PATCH|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?\);)
