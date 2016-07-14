@@ -1,0 +1,7 @@
+---
+wordpress:
+  -
+    description: "Official Wordpress plugins repository (SVN)"
+    url: "https://plugins.svn.wordpress.org/"
+    download: |
+      svn ls 'https://plugins.svn.wordpress.org/' | parallel -j 5 svn export 'https://plugins.svn.wordpress.org/'{}
