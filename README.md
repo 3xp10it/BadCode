@@ -4,19 +4,17 @@ This project aims to fingerprint every bad security practice and detect them in 
 
 ![BadCode](https://raw.githubusercontent.com/pwnsdx/BadCode/master/screenshot.png)
 
-### Want to see how people are poorly coding their plugins?
+### Want to see how people are badly coding their plugins?
 
-1. Download huge repository of plugins
-2. Open Sublime Text, open the directory that contains the plugins and "Find in Files" the regex of your choice
+1. Download huge repository of plugins (see repositories.yaml)
+2. Open Sublime Text, open the directory that contains the plugins and "Find in Files" the regex of your choice (A PoC is available in alpha.yaml, it works against Wordpress and discover unsafe SQL queries)
 3. Enjoy
 
-*A PoC is available in alpha.yaml, it works against Wordpress and discover unsafe SQL queries*
-
-**Warning: This repository is heavily under construction so please star/watch/fork it and come back later :)**
+**Warning: This repository is heavily under construction so please star/watch/fork it and come back later... or not :)**
 
 ### ToDo
 
-- More regex based on OWASP documentation
+- Focus on Wordpress with more regex based on OWASP documentation
 - Add Joomla! support
 - Add Drupal support
 
@@ -25,7 +23,7 @@ This project aims to fingerprint every bad security practice and detect them in 
 ```
 The MIT License (MIT)
 
-Copyright (c) 2016 Sabri Haddouche
+Copyright (c) 2016 Sabri Haddouche <https://pwnsdx.pw/>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
