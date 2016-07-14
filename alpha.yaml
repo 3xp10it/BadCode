@@ -1,10 +1,69 @@
 ---
-wordpress:
+high:
   -
+    title: "Weak hashing algorithms used"
+    check: |
+      (hash\(("|'|`))(md4|md5|sha1)("|'|`)*
+      (md4|md5|sha1)((\s?\()
+  -
+    title: "Weak hashing algorithms used for passwords"
+    check: | # Need more precision to prevent CSS files from showing up
+      (secret|password|pass|key)(.*)((hash\(("|'|`))*)(md4|md5|sha1|sha256|sha384|sha512)((\s?\()|("|'|`))*
+  -
+    title: "LFI / RFI"
+    check: |
+      (require|include)((_once)*)(\s+|\s?\()(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?(;|\s))
+  -
+    title: "CRLF Injection / HTTP Response Splitting"
+    check: | # ToDo
+      header\s?\(("|'|`|$)(.*)(\$.*)
+      _SERVER\[\s*('|")HTTP_HOST('|")\s*\]
+  -
+    title: "XSS vulnerabilities via echo" # Inspired by foospidy/GrepBugs
+    check: |
+      (echo(\s*\()?|((v|)print(_r|f)?|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result)\s*\()\s*[^;]*\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER)
+  -
+    title: "System-related PHP commands" # Inspired by foospidy/GrepBugs
+    check: | # To finish / optimize
+      (shell_exec|system|popen|pcntl_exec|expect_popen|proc_open|eval|dl)\s?\(
+  -
+    for: wordpress
     title: "Unsafe SQL queries"
     check: |
-      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$(?!([a-zA-Z0-9_]{0,6})db)(.*?\);)
+      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$(?!([a-zA-Z0-9_]{0,6})db)(.*?(;|\s))
   -
+    for: wordpress
     title: "Unsafe SQL queries (Strict)"
     check: |
-      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$_(GET|POST|PUT|PATCH|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?\);)
+      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?(;|\s))
+  -
+    title: "Weak encryption"
+    check: | # https://secure.php.net/manual/en/function.crypt.php
+      # ToDo
+
+---
+medium:
+  -
+    title: "Unsafe cryptographic secure values generator"
+    check: | # site:php.net This function does not generate cryptographically secure values, and should not be used for cryptographic purposes.
+      (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)\s?\(
+  -
+    title: "Possible LFI / RFI"
+    # include $file;
+    # include_once $file;
+    # include ($file);
+    # require_once($file);
+    # require($file)
+    check: |
+      (require|include)((_once)*)(\s+|\s?\()(.*)\$([a-zA-Z0-9_]*)(.*?(;|\s))
+
+---
+low:
+
+---
+info:
+  -
+    title: "Network communications"
+    check: | # Optimization for file_get_contents|fopen needed
+      (curl_exec)\s?\(
+      (file_get_contents|fopen)\s?\(
