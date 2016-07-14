@@ -10,7 +10,7 @@ This project aims to fingerprint every bad security practice and detect them in 
 2. Open Sublime Text then open the directory that contains the files and "Find in Files" the regex of your choice (A PoC is available in alpha.yaml, it works against Wordpress and discover unsafe SQL queries)
 3. Enjoy
 
-**Warning: This repository is heavily under construction so please star/watch/fork it and come back later... or not :)**
+**Warning: This repository is under heavy construction so please star/watch/fork it and come back later... or not :)**
 
 ### ToDo
 
