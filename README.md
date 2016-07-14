@@ -1,6 +1,8 @@
 ## BadCode
 
-This project aims to fingerprint every single bad security practice and detect them in every opensource project (3rd-party mostly).
+This project aims to fingerprint every bad security practice and detect them in every opensource project (3rd-party mostly).
+
+![BadCode](https://raw.githubusercontent.com/pwnsdx/BadCode/master/screenshot.png)
 
 ### Want to see how people are poorly coding their plugins?
 
