@@ -6,17 +6,26 @@ This project aims to fingerprint every bad security practice and detect them in 
 
 ### Want to see how people are badly coding their plugins?
 
-1. Download a huge repository of files (see repositories.yaml)
-2. Open Sublime Text then open the directory that contains the files and "Find in Files" the regex of your choice (A PoC is available in alpha.yaml, it works against Wordpress and discover unsafe SQL queries)
-3. Enjoy
+1. Download a huge repository of files (see [repositories.yaml](https://github.com/pwnsdx/BadCode/blob/master/repositories.yaml))
+2. Open the directory that contains the files in *Sublime Text* and "Find in Files" the regex of your choice (A PoC is available in [alpha.yaml](https://github.com/pwnsdx/BadCode/blob/master/alpha.yaml), it works against Wordpress and discover unsafe SQL queries)
+3. Enjoy!
 
-**Warning: This repository is under heavy construction so please star/watch/fork it and come back later... or not :)**
+**Warning: This repository is under heavy construction**
 
 ### ToDo
 
-- Focus on Wordpress with more regular expression (based on OWASP documentation)
+- Focus on Wordpress (plugins) with more regular expressions (based on OWASP documentation)
 - Add Joomla! support
 - Add Drupal support
+
+### Want to help?
+
+Any help is very appreciated, especially in these areas:
+
+- Regex (by adding new ones or fixing/optimizing the existing ones)
+- Repositories (by adding more repositories)
+
+All pull requests that is considered useful will be accepted.
 
 #### License
 
