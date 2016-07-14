@@ -1,6 +1,6 @@
 ## BadCode
 
-This project aims to fingerprint every bad security practice and detect them in opensource project (3rd-party mostly).
+This project aims to fingerprint every bad security practice and detect them in opensource projects (3rd-party mostly).
 
 ![This screenshot shows a bunch of SQL injections in some Wordpress plugins by only using regex to detect them.](https://raw.githubusercontent.com/pwnsdx/BadCode/master/screenshot.png)
 
