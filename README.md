@@ -2,7 +2,9 @@
 
 This project aims to fingerprint every bad security practice and detect them in every opensource project (3rd-party mostly).
 
-![BadCode](https://raw.githubusercontent.com/pwnsdx/BadCode/master/screenshot.png)
+![This screenshot shows a bunch of SQL injection in some Wordpress plugins by only using regex.](https://raw.githubusercontent.com/pwnsdx/BadCode/master/screenshot.png)
+
+###### This screenshot shows a bunch of SQL injection in some Wordpress plugins by only using regex.
 
 ### Want to see how people code their plugins so badly?
 
