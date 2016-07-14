@@ -7,7 +7,7 @@ This project aims to fingerprint every bad security practice and detect them in 
 ### Want to see how people code their plugins so badly?
 
 1. Download a huge repository of files (see [repositories.yaml](https://github.com/pwnsdx/BadCode/blob/master/repositories.yaml))
-2. Open the directory that contains the files in *Sublime Text* and "Find in Files" the regex of your choice (A PoC is available in [alpha.yaml](https://github.com/pwnsdx/BadCode/blob/master/alpha.yaml), it works against Wordpress and discover unsafe SQL queries)
+2. Open the folder that contains the files in *Sublime Text* and "Find in Files" the regex of your choice (A PoC is available in [alpha.yaml](https://github.com/pwnsdx/BadCode/blob/master/alpha.yaml), it works against Wordpress and discover unsafe SQL queries)
 3. Enjoy!
 
 **Warning: This repository is under heavy construction**
