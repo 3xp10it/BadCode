@@ -1,6 +1,6 @@
 ## BadCode
 
-This project aims to fingerprint every single bad security practice and detect them in every opensource project.
+This project aims to fingerprint every single bad security practice and detect them in every opensource project (3rd-party mostly).
 
 ### Want to see how people are poorly coding their plugins?
 
@@ -8,7 +8,7 @@ This project aims to fingerprint every single bad security practice and detect t
 2. Open Sublime Text, open the directory that contains the plugins and "Find in Files" the regex of your choice
 3. Enjoy
 
-*A PoC is available in alpha.json, it works against Wordpress and discover unsafe SQL queries*
+*A PoC is available in alpha.yaml, it works against Wordpress and discover unsafe SQL queries*
 
 **Warning: This repository is heavily under construction so please star/watch/fork it and come back later :)**
 
