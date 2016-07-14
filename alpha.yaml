@@ -1,5 +1,9 @@
 # ToDo:
 # - Detection of comments required to prevent false positive
+# - Check Session manipulation:
+#     SESSION[...] = $_(GET|POST...)[...]
+# - Check poor encryption https://secure.php.net/manual/en/function.crypt.php
+# - Check CSRF (Wordpress)
 
 ---
 high:
@@ -7,12 +11,11 @@ high:
     title: "Weak hashing algorithms used"
     check: |
       (hash\(("|'|`))(md4|md5|sha1)("|'|`)*
-      (md4|md5|sha1)((\s?\()
+      (md5|sha1)((\s?\()
   -
     title: "Weak hashing algorithms used for passwords"
-    # More precision needed to prevent CSS files from showing up
     check: |
-      (secret|password|pass|key)(.*)((hash\(("|'|`))*)(md4|md5|sha1|sha256|sha384|sha512)((\s?\()|("|'|`))*
+      (secret|password|pass|key)(.*)((hash\(("|'|`))*)(md5|sha1|sha256|sha384|sha512)((\s?\()|("|'|`))*
   -
     title: "LFI / RFI"
     check: |
@@ -40,11 +43,6 @@ high:
     title: "Unsafe SQL queries (Strict)"
     check: |
       \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?(;|\s))
-  -
-    title: "Weak encryption"
-    # https://secure.php.net/manual/en/function.crypt.php
-    check: |
-      # ToDo
 
 medium:
   -
@@ -57,7 +55,7 @@ medium:
       (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)\s?\(
   -
     title: "Possible LFI / RFI"
-    # This validates:
+    # This check:
     # include $file;
     # include_once $file;
     # include ($file);
@@ -66,7 +64,7 @@ medium:
     check: |
       (require|include)((_once)*)(\s+|\s?\()(.*)\$([a-zA-Z0-9_]*)(.*?(;|\s))
   -
-    title: "Possible Information Leak" # Inspired by foospidy/GrepBugs
+    title: "Possible informations leak" # Inspired by foospidy/GrepBugs
     check: |
       (phpinfo|highlight_file|show_source|error_reporting(.*)E_(ALL|ERROR|WARNING|PARSE))\s?\(
 
