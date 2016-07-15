@@ -14,10 +14,12 @@ This project aims to fingerprint every bad security practice and detect them in 
 
 ### This is just the beginning
 
-- More regular expressions for Wordpress plugins (based on OWASP documentation) is coming
+- More regular expressions for PHP and Wordpress plugins (based on OWASP documentation) on its way
 - Joomla! support is coming
 - Drupal support is coming
+- Many PHP frameworks support are coming too
 - CLI that check files automatically is coming too!
+- Other languages?
 
 **Note: This project won't save you from every security issues and especially intentionnal backdoor as the code can be obfuscated to bypass the detection.**
 

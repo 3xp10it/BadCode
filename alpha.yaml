@@ -140,7 +140,7 @@ medium:
     # Also, SQL RAND() is also detected in this check because it is not a cryptographically secure function
     #   Source: https://stackoverflow.com/questions/35880963/does-mysql-have-a-cryptographically-secure-random-number-generator/35881049#35881049
     check: |
-      (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
+      (uniqid|((array|mt)_|s|)rand|str-shuffle|lcg-value)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
     patterns:
       true: |
         uniqid('');
@@ -231,7 +231,7 @@ medium:
     status: EXPERIMENTAL
     flag: crlf
     check: |
-      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$
+      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$
   -
     for: php
     description: Possible informations leak # Inspired by foospidy/GrepBugs
@@ -277,9 +277,9 @@ info:
 
 # ToDo:
 #
-# - Detection of code comments required to prevent false positive
+# - Detection of code comments to prevent false positive
 # - Check Session manipulation:
-#     SESSION[...] = $_(GET|POST...)[...]
+#     SESSION[...$_(GET|POST...)] = $_(GET|POST...)[...]
 # - Check poor encryption https://secure.php.net/manual/en/function.crypt.php
 # - Check CSRF (Wordpress)
 #
@@ -291,7 +291,7 @@ info:
 #
 # Global regexes:
 #
-#    Detect comments:
+#    Detect if the line is a comment:
 #      ?
 #   
 #    Simplify function catching:
@@ -320,5 +320,5 @@ info:
 #       $awesome = $_SERVER['REQUEST_URI'];
 #                 |------------------------|
 #       $name = 'Name: ' . $_GET['name'];
-#                      |-------------|
+#                         |-----|
 #
