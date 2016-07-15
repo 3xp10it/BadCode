@@ -38,7 +38,7 @@ high:
         require_once('/home/opt/database/' . $_COOKIE['city']);
         require_once(      $_REQUEST['file'] . '.txt');
         require_once      $_REQUEST['file'] . '.txt'
-      false:
+      false: |
         requireonce($_GET['file']);
   -
     for: php
@@ -234,25 +234,34 @@ info:
 #     SESSION[...] = $_(GET|POST...)[...]
 # - Check poor encryption https://secure.php.net/manual/en/function.crypt.php
 # - Check CSRF (Wordpress)
-
-# Detect comments:
-#   ?
 #
-# Simplify function catching:
-#    (?:["'`$(\s]{1,50})
 #
-#    hash  (   'sha1', 'hey');
-#       |-------|
+# Global regexes:
 #
-# Variable names:
-#    \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
-#    \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})
-#
-#    $awesome = supersecureclass::crypt('hi')
-#   |--------|
-# 
-# Catch superglobal variables:
-#   (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
-#   (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
-#   (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
+#    Detect comments:
+#      ?
+#   
+#    Simplify function catching:
+#       (?:["'`$(\s]{1,50})
+#   
+#       hash  (   'sha1', 'hey');
+#          |-------|
+#   
+#    Variable names:
+#       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
+#       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})
+#   
+#       $awesome = supersecureclass::crypt('hi')
+#      |--------|
+#    
+#    Catch superglobal variables:
+#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
+#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
+#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
+#   
+#       $awesome = $_SERVER[REQUEST_URI];
+#       $awesome = $_SERVER['REQUEST_URI'];
+#                 |------------------------|
+#       $name = 'Name: ' . $_GET['name'];
+#                      |-------------|
 #
