@@ -28,7 +28,7 @@ high:
     title: LFI / RFI (Strict)
     status: STABLE
     check: |
-      (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
+      (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
     patterns:
       true: |
         include $_GET['inject'];
@@ -92,7 +92,7 @@ high:
     # $quiz = $_REQUEST[quiz];
     # $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$quiz'");
     check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?;)
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(.*?;)
     patterns:
       true: |
         $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
@@ -124,7 +124,7 @@ medium:
         $mysecretnumber = rand ($_GET[SECRET_TOKEN], 100);
   -
     for: php:wordpress
-    title: Unsafe SQL queries
+    title: Unsafe SQL queries (Wordpress)
     status: UNSTABLE
     check: |
       \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
@@ -137,9 +137,10 @@ medium:
       false: |
         $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
         $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
   -
     for: php
-    title: Possible LFI / RFI
+    title: Possible LFI / RFI (Wordpress)
     status: STABLE
     check: |
       (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
@@ -265,7 +266,7 @@ info:
 #    Catch superglobal variables:
 #       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
 #       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
-#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
+#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
 #   
 #       $awesome = $_SERVER[REQUEST_URI];
 #       $awesome = $_SERVER['REQUEST_URI'];
