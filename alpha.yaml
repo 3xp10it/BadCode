@@ -92,11 +92,12 @@ high:
     # $quiz = $_REQUEST[quiz];
     # $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$quiz'");
     check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(.*?;)
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(.*?;)
     patterns:
       true: |
         $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
         $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
       false: |
         $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
         $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
@@ -105,6 +106,7 @@ high:
         $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
         $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
         $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
 medium:
   -
     for: php
@@ -127,7 +129,7 @@ medium:
     title: Unsafe SQL queries (Wordpress)
     status: UNSTABLE
     check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
     patterns:
       true: |
         $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
