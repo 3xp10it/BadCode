@@ -2,7 +2,7 @@
 high:
   -
     for: php
-    title: Weak hashing algorithms used
+    description: Weak hashing algorithms used
     status: STABLE
     check: |
       ((hash(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50}))*)(md5|sha1)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
@@ -13,7 +13,7 @@ high:
         $test = hash  (  'sha1', 'hey');
   -
     for: php
-    title: Weak hashing algorithms used for passwords and secrets
+    description: Weak hashing algorithms used for passwords and secrets
     status: UNSTABLE
     check: |
       (secret|password|pass|key)(?:.*)((hash(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50}))*)(md5|sha(1|256|384|512))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
@@ -25,7 +25,7 @@ high:
         $password =     sha1('thisisapassword'   );
   -
     for: php
-    title: LFI / RFI (Strict)
+    description: LFI / RFI (Strict)
     status: STABLE
     check: |
       (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
@@ -42,22 +42,24 @@ high:
         requireonce($_GET['file']);
   -
     for: php
-    title: CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
+    description: CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
     status: EXPERIMENTAL
+    flag: crlf
     check: |
       header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
   -
     for: php
-    title: XSS vulnerabilities # Inspired by foospidy/GrepBugs
+    description: XSS vulnerabilities # Inspired by foospidy/GrepBugs
     status: EXPERIMENTAL
     check: |
       (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
   -
     for: php
-    title: PHP Code / Object Execution (Strict)
+    description: PHP Code / Object Execution (Strict)
     status: UNSTABLE
+    flag: remoteexec
     # Look behind is used here, workaround for Javascript needed
-    # Here we additionally check for $_SESSION because these commands are very dangerous and we don't want an attacker to use it if he found a way to manipulate the session
+    # Here we additionally check $_SESSION because these commands are very sensible and we don't want an attacker to use them if there is a way to manipulate the session
     check: |
       (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
     patterns:
@@ -86,7 +88,7 @@ high:
         register_tick_function('my_function', true);
   -
     for: php:wordpress
-    title: SQL Injection (Wordpress)
+    description: SQL Injection (Wordpress)
     status: UNSTABLE
     flag: sqli
     check: |
@@ -108,7 +110,7 @@ high:
         $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
   -
     for: php:wordpress
-    title: SQL Injection in prepared statement (Wordpress)
+    description: SQL Injection in prepared statement (Wordpress)
     status: UNSTABLE
     flag: sqli
     check: |
@@ -128,39 +130,10 @@ high:
         $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
         $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
         $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
-
-//// TO DELETE
-  -
-    for: php:wordpress
-    title: Unsafe SQL queries (Strict)
-    status: UNSTABLE
-    check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(.*?;)
-    patterns:
-      true: |
-        $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
-        $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
-      false: |
-        $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
-        $wpdb->get_row ( $query );
-        $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
-        $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
-        $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
-
-
-
 medium:
   -
     for: php
-    title: Unsafe cryptographic secure values generator
+    description: Unsafe cryptographic secure values generator
     status: UNSTABLE
     # Google Dork:
     #   site:php.net This function does not generate cryptographically secure values, and should not be used for cryptographic purposes.
@@ -176,7 +149,7 @@ medium:
         $mysecretnumber = rand ($_GET[SECRET_TOKEN], 100);
   -
     for: php:wordpress
-    title: Unsafe SQL queries (Wordpress)
+    description: Unsafe SQL query (Wordpress)
     status: UNSTABLE
     flag: sqli
     check: |
@@ -195,7 +168,7 @@ medium:
         $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
   -
     for: php:wordpress
-    title: Unsafe prepared SQL statement (Wordpress)
+    description: Unsafe prepared SQL statement (Wordpress)
     status: UNSTABLE
     flag: sqli
     check: |
@@ -208,7 +181,7 @@ medium:
         $dupe = $wpdb->get_results(      $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
   -
     for: php
-    title: Possible LFI / RFI (Wordpress)
+    description: Possible LFI / RFI (Wordpress)
     status: STABLE
     check: |
       (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
@@ -222,8 +195,9 @@ medium:
         require   ($file  )
   -
     for: php
-    title: Possible PHP Code / Object Execution
+    description: Possible PHP Code / Object Execution
     status: UNSTABLE
+    flag: remoteexec
     # Look behind is used here, workaround for Javascript needed
     check: |
       (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
@@ -253,13 +227,14 @@ medium:
         curl_exec($ch);
   -
     for: php
-    title: CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
+    description: Possible CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
     status: EXPERIMENTAL
+    flag: crlf
     check: |
-      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
+      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$
   -
     for: php
-    title: Possible informations leak # Inspired by foospidy/GrepBugs
+    description: Possible informations leak # Inspired by foospidy/GrepBugs
     status: STABLE
     check: |
       (((phpinfo|highlight_file|show_source)(\s*(["'`$(])*))|error_reporting(?:.*)E_(ALL|ERROR|WARNING|PARSE))(?:.*)\);
@@ -275,7 +250,7 @@ low:
 info:
   -
     for: php
-    title: Network communications
+    description: Network communications
     status: EXPERIMENTAL
     # Optimization for file_get_contents|fopen needed
     # Regex for IPv6 / IPv4 for socket_connect
@@ -285,7 +260,7 @@ info:
       (file_get_contents|fopen)\s?\((?:.*)\);
   -
     for: php
-    title: Obfuscated code via base64
+    description: Obfuscated code via base64
     status: EXPERIMENTAL
     check: |
       # Fingerprinting of FOPO - Free Online PHP Obfuscator
