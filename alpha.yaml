@@ -214,6 +214,19 @@ info:
     check: |
       (curl_exec|ftp_connect|ftp_ssl_connect|fsockopen|pfsockopen|socket_bind|socket_connect|socket_listen|socket_create_listen|socket_accept|socket_getpeername|socket_send)\s?\(((?:.*)\);
       (file_get_contents|fopen)\s?\((?:.*)\);
+  -
+    for: php
+    title: Obfuscated base64 encoded code
+    status: EXPERIMENTAL
+    check: |
+      # Fingerprinting of FOPO - Free Online PHP Obfuscator
+      (\\x62\\x61\\x73\\x65\\x36\\64\\137\\x64\\145\\x63\\x6f\\x64\\x65|eval(?:["'`$(\s]{1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:["'`$(\s]{1,50})(?:[A-Za-z0-9+/]*))
+    patterns:
+      true: |
+        $e2afdc5b="\x62\x61\x73\x65\x36\64\137\x64\145\x63\x6f\x64\x65";
+        eval($e2afdc5b("Ly9OSXRYYy9JRXZla0NKcXFMbUEzODZWQUowcURqZjdDdng2S0RRYkRKditpVElDYWFRVU5WNlJJNXV
+      false: |
+        eval($e2afdc5b("-----BEGIN RSA PRIVATE KEY-----
 
 # ToDo:
 # - Detection of comments required to prevent false positive
