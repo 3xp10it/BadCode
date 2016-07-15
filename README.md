@@ -19,12 +19,14 @@ This project aims to fingerprint every bad security practice and detect them in 
 - Drupal support is coming
 - CLI that check files automatically is coming too!
 
+**Note: This project won't save you from every security issues and especially intentionnal backdoor as the code can obfuscated to bypass the regexes.**
+
 ### Want to help?
 
 Any help is very appreciated, especially in these areas:
 
 - Regex (by adding new ones or fixing/optimizing the existing ones)
-- Repositories (by adding more repositories)
+- Repositories (by adding more of them)
 
 All pull requests that is considered useful will be accepted.
 

@@ -5,77 +5,147 @@
 # - Check poor encryption https://secure.php.net/manual/en/function.crypt.php
 # - Check CSRF (Wordpress)
 
+# Detect comments:
+#   ?
+#
+# Catch vars:
+#    (["'`$(\s]{1,50})
+#
+#    hash  (   'sha1', 'hey');
+#       |-------|
+
 ---
 high:
   -
+    for: php
     title: "Weak hashing algorithms used"
+    status: STABLE
     check: |
-      (hash\(("|'|`))(md4|md5|sha1)("|'|`)*
-      (md5|sha1)((\s?\()
+      ((hash(["'`$(\s]{1,50}))*)(md5|sha1)(["'`$(\s]{1,50})
+    tests:
+      $beautiful = sha1(0 * rand(0, 50));
+      echo 'MyDataDevil RNG -> ' . hash('md5', md5($_SERVER['DOCUMENT_ROOT'] . $_SERVER['REQUEST_TIME_FLOAT']));
+      $test = hash  (  'sha1', 'hey');
   -
-    title: "Weak hashing algorithms used for passwords"
+    for: php
+    title: "Weak hashing algorithms used for passwords and secrets"
+    status: STABLE
     check: |
-      (secret|password|pass|key)(.*)((hash\(("|'|`))*)(md5|sha1|sha256|sha384|sha512)((\s?\()|("|'|`))*
+      (secret|password|pass|key)(.*)((hash(["'`$(\s]{1,50}))*)(md5|sha(1|256|384|512))(["'`$(\s]{1,50})
+    tests: |
+      echo 'Here is your supersafe password' . hash('sha512', $_POST['password']);
+      $secret_key = hash('sha1'    , $_GET['username']);
+      $api_secret = md5('mysupersecret');
+      $password = sha1('thisisapassword'   );
   -
-    title: "LFI / RFI"
+    for: php
+    title: "LFI / RFI (Strict)"
+    status: EXPERIMENTAL
     check: |
-      (require|include)((_once)*)(\s+|\s?\()(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?(;|\s))
+      (require|include)((_once)*)(["'`$(\s]{1,50})(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
+    tests: |
+      include $_GET['inject'];
+      include_once $_POST['file'];
+      include_once badsanitizer($_POST['file']);
+      include (  $_SERVER['REQUEST_URI']     );
+      require_once('/home/opt/database/' . $_COOKIE['city']);
+      require_once(      $_REQUEST['file'] . '.txt');
   -
+    for: php
     title: "CRLF Injection / HTTP Response Splitting" # Inspired by foospidy/GrepBugs
+    status: EXPERIMENTAL
     check: |
       header\s?\(("|'|`|$)(.*)(\$.*)
       _SERVER\[\s*('|")HTTP_HOST('|")\s*\]
   -
+    for: php
     title: "XSS vulnerabilities via echo" # Inspired by foospidy/GrepBugs
+    status: EXPERIMENTAL
     check: |
-      (echo(\s*\()?|((v|)print(_r|f)?|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result)\s*\()\s*[^;]*\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER)
+      (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(["'`$(\s]{1,50})(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER)
   -
+    for: php
     title: "Dangerous (system-related) PHP commands" # Inspired by foospidy/GrepBugs
+    status: UNSTABLE
     check: |
-      (passthru|(shell_|)exec|system|pcntl_exec|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)\s?\(
+      (passthru|(?!curl_)exec|(shell|pcntl)_exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(["'`$(\s]{1,50})
+    tests: |
+      passthru("cat myfile.zip",$err);
+      echo exec('whoami');
+      $output = shell_exec('ls -lart');
+      pcntl_exec('/path/to/cmd');
+      $last_line = system('ls', $retval);
+      $last_line =system('ls', $retval);
+      $process = proc_open('php', $descriptorspec, $pipes, $cwd, $env);
+      eval("\$str = \"$str\";");
+      dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
+      register_tick_function('my_function', true);
+      register_tick_function(   array(&$object, 'my_method'), true);
+      register_shutdown_function('shutdown');
+      curl_exec($ch); # This one should NOT work
   -
-    for: wordpress
+    for: php:wordpress
     title: "Unsafe SQL queries"
+    status: EXPERIMENTAL
     check: |
-      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$(?!([a-zA-Z0-9_]{0,6})db)(.*?(;|\s))
+      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(["'`$(\s]{1,50})(.*)\$(?!([a-zA-Z0-9_]{0,6})db)(.*?;)
   -
-    for: wordpress
+    for: php:wordpress
     title: "Unsafe SQL queries (Strict)"
+    status: EXPERIMENTAL
     check: |
-      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(("|'|`)+)(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?(;|\s))
+      \$([a-zA-Z0-9_]{0,6})db->(get_([a-zA-Z0-9_]*))\(((?![\s\S]{0,10}\$wpdb)[\s\S]{0,10})(["'`$(\s]{1,50})(.*)\$_(GET|POST|PUT|PATCH|REQUEST|COOKIE|DELETE|SERVER\[("|'|`|)HTTP_(.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?;)
 
 medium:
   -
+    for: php
     title: "Unsafe cryptographic secure values generator"
+    status: UNSTABLE
     # Google Dork:
     #   site:php.net This function does not generate cryptographically secure values, and should not be used for cryptographic purposes.
     # Also, SQL RAND() is also detected in this check because it is not a cryptographically secure function
     #   Source: https://stackoverflow.com/questions/35880963/does-mysql-have-a-cryptographically-secure-random-number-generator/35881049#35881049
     check: |
-      (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)\s?\(
+      (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)\s?\((.*)\);
+    tests: |
+      uniqid('');
+      mysql_query('SELECT username FROM users WHERE id=RAND()');
+      echo str-shuffle("hello");
+      $mysecretnumber = rand ($_GET[SECRET_TOKEN], 100);
   -
+    for: php
     title: "Possible LFI / RFI"
-    # This check:
-    # include $file;
-    # include_once $file;
-    # include ($file);
-    # require_once($file);
-    # require($file)
+    status: STABLE
     check: |
-      (require|include)((_once)*)(\s+|\s?\()(.*)\$([a-zA-Z0-9_]*)(.*?(;|\s))
+      (require|include)((_once)*)(["'`$(\s]{1,50})(.*)\$([a-zA-Z0-9_]*)
+    tests: |
+      include $file;
+      include_once $file;
+      include (  $file);
+      require_once($file);
+      require($file)
   -
+    for: php
     title: "Possible informations leak" # Inspired by foospidy/GrepBugs
+    status: STABLE
     check: |
-      (phpinfo|highlight_file|show_source|error_reporting(.*)E_(ALL|ERROR|WARNING|PARSE))\s?\(
+      (((phpinfo|highlight_file|show_source)(\s*(["'`$(])*))|error_reporting(.*)E_(ALL|ERROR|WARNING|PARSE))(.*)\);
+    tests: |
+      highlight_file('index.php5');
+      phpinfo();
+      error_reporting(E_ALL & ~E_NOTICE);
+      highlight_file(    $_GET['myfile']);
 
 low:
 
 info:
   -
+    for: php
     title: "Network communications"
+    status: EXPERIMENTAL
     # Optimization for file_get_contents|fopen needed
     # Regex for IPv6 / IPv4 for socket_connect
     # fsockopen use ((ssl|tls):\/\/|)
     check: |
-      (curl_exec|ftp_connect|ftp_ssl_connect|fsockopen|pfsockopen|socket_bind|socket_connect|socket_listen|socket_create_listen|socket_accept|socket_getpeername|socket_send)\s?\(
-      (file_get_contents|fopen)\s?\(
+      (curl_exec|ftp_connect|ftp_ssl_connect|fsockopen|pfsockopen|socket_bind|socket_connect|socket_listen|socket_create_listen|socket_accept|socket_getpeername|socket_send)\s?\(((.*)\);
+      (file_get_contents|fopen)\s?\((.*)\);
