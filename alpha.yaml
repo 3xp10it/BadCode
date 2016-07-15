@@ -86,18 +86,15 @@ high:
         register_tick_function('my_function', true);
   -
     for: php:wordpress
-    title: Unsafe SQL queries (Strict)
+    title: SQL Injection (Wordpress)
     status: UNSTABLE
-    # Because of the regex limitations (?), we cannot verify variables in queries e.g.
-    # $quiz = $_REQUEST[quiz];
-    # $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$quiz'");
+    flag: sqli
     check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(.*?;)
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
     patterns:
       true: |
         $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
         $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
       false: |
         $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
         $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
@@ -106,7 +103,60 @@ high:
         $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
         $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
         $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   'SELECT *  FROM ' . $_GET[table] . ' $wpdb->test WHERE comment_post_ID =1 AND comment_author_url = %s', $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+  -
+    for: php:wordpress
+    title: SQL Injection in prepared statement (Wordpress)
+    status: UNSTABLE
+    flag: sqli
+    check: |
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
+    patterns:
+      true: |
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   'SELECT *  FROM ' . $_GET[table] . ' $wpdb->test WHERE comment_post_ID =1 AND comment_author_url = %s', $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+      false: |
+        $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
+        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
+        $wpdb->get_row ( $query );
+        $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
+        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
+        $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
+        $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
+        $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
+        $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
+
+//// TO DELETE
+  -
+    for: php:wordpress
+    title: Unsafe SQL queries (Strict)
+    status: UNSTABLE
+    check: |
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(.*?;)
+    patterns:
+      true: |
+        $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
+        $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+      false: |
+        $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
+        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
+        $wpdb->get_row ( $query );
+        $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
+        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
+        $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
+        $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+
+
+
 medium:
   -
     for: php
@@ -128,6 +178,7 @@ medium:
     for: php:wordpress
     title: Unsafe SQL queries (Wordpress)
     status: UNSTABLE
+    flag: sqli
     check: |
       \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
     patterns:
@@ -139,7 +190,22 @@ medium:
       false: |
         $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
         $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+  -
+    for: php:wordpress
+    title: Unsafe prepared SQL statement (Wordpress)
+    status: UNSTABLE
+    flag: sqli
+    check: |
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
+    patterns:
+      true: |
+        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+      false: |
+        $dupe = $wpdb->get_results(      $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
   -
     for: php
     title: Possible LFI / RFI (Wordpress)
@@ -242,6 +308,11 @@ info:
 # - Check poor encryption https://secure.php.net/manual/en/function.crypt.php
 # - Check CSRF (Wordpress)
 #
+# Note:
+#
+#   Because of the regex limitations (?), we cannot verify variables in queries e.g.
+#   $quiz = $_REQUEST[quiz];
+#   $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$quiz'");
 #
 # Global regexes:
 #
@@ -266,9 +337,9 @@ info:
 #      |--------|
 #    
 #    Catch superglobal variables:
-#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
-#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
-#       (?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
+#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
+#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
+#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
 #   
 #       $awesome = $_SERVER[REQUEST_URI];
 #       $awesome = $_SERVER['REQUEST_URI'];
