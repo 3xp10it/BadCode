@@ -5,7 +5,7 @@ high:
     title: Weak hashing algorithms used
     status: STABLE
     check: |
-      ((hash(?:["'`$(\s*/]{1,50}))*)(md5|sha1)(?:["'`$(\s*/]{1,50})
+      ((hash(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50}))*)(md5|sha1)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
     patterns:
       true: |
         $beautiful = sha1(0 * rand(0, 50));
@@ -16,7 +16,7 @@ high:
     title: Weak hashing algorithms used for passwords and secrets
     status: UNSTABLE
     check: |
-      (secret|password|pass|key)(?:.*)((hash(?:["'`$(\s*/]{1,50}))*)(md5|sha(1|256|384|512))(?:["'`$(\s*/]{1,50})
+      (secret|password|pass|key)(?:.*)((hash(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50}))*)(md5|sha(1|256|384|512))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
     patterns:
       true: |
         echo 'Here is your supersafe password' . hash('sha512', $_POST['password']);
@@ -28,7 +28,7 @@ high:
     title: LFI / RFI (Strict)
     status: STABLE
     check: |
-      (require|include)((_once)*)(?:["'`$(\s*/]{1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
+      (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])
     patterns:
       true: |
         include $_GET['inject'];
@@ -45,13 +45,13 @@ high:
     title: CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
     status: EXPERIMENTAL
     check: |
-      header(?:["'`$(\s*/]{1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
+      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
   -
     for: php
     title: XSS vulnerabilities # Inspired by foospidy/GrepBugs
     status: EXPERIMENTAL
     check: |
-      (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:["'`$(\s*/]{1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
+      (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
   -
     for: php
     title: PHP Code / Object Execution (Strict)
@@ -59,7 +59,7 @@ high:
     # Look behind is used here, workaround for Javascript needed
     # Here we additionally check for $_SESSION because these commands are very dangerous and we don't want an attacker to use it if he found a way to manipulate the session
     check: |
-      (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:["'`$(\s*/]{1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
+      (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
     patterns:
       true: |
         echo unserialize(stripslashes($_POST["awebvoice_data"]));
@@ -92,7 +92,7 @@ high:
     # $quiz = $_REQUEST[quiz];
     # $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$quiz'");
     check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:["'`$(\s*/]{1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:["'`$(\s*/]{1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?;)
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)REQUEST_URI("|'|`|)\])(.*?;)
     patterns:
       true: |
         $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
@@ -115,7 +115,7 @@ medium:
     # Also, SQL RAND() is also detected in this check because it is not a cryptographically secure function
     #   Source: https://stackoverflow.com/questions/35880963/does-mysql-have-a-cryptographically-secure-random-number-generator/35881049#35881049
     check: |
-      (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)(?:["'`$(\s*/]{1,50})
+      (uniqid|(mt_|s|)rand|str-shuffle|lcg-value)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
     patterns:
       true: |
         uniqid('');
@@ -127,7 +127,7 @@ medium:
     title: Unsafe SQL queries
     status: UNSTABLE
     check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:["'`$(\s*/]{1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:["'`$(\s*/]{1,50})(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
+      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!([a-zA-Z0-9_]{0,6})db)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
     patterns:
       true: |
         $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
@@ -142,7 +142,7 @@ medium:
     title: Possible LFI / RFI
     status: STABLE
     check: |
-      (require|include)((_once)*)(?:["'`$(\s*/]{1,50})(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
+      (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
     patterns:
       true: |
         include $file;
@@ -157,7 +157,7 @@ medium:
     status: UNSTABLE
     # Look behind is used here, workaround for Javascript needed
     check: |
-      (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:["'`$(\s*/]{1,50})
+      (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
     patterns:
       true: |
         echo unserialize(stripslashes($_POST["awebvoice_data"]));
@@ -187,7 +187,7 @@ medium:
     title: CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
     status: EXPERIMENTAL
     check: |
-      header(?:["'`$(\s*/]{1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
+      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
   -
     for: php
     title: Possible informations leak # Inspired by foospidy/GrepBugs
@@ -220,7 +220,7 @@ info:
     status: EXPERIMENTAL
     check: |
       # Fingerprinting of FOPO - Free Online PHP Obfuscator
-      (\\x62\\x61\\x73\\x65\\x36\\64\\137\\x64\\145\\x63\\x6f\\x64\\x65|eval(?:["'`$(\s*/]{1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:["'`$(\s*/]{1,50})(?:[A-Za-z0-9+/]+))
+      (\\x62\\x61\\x73\\x65\\x36\\64\\137\\x64\\145\\x63\\x6f\\x64\\x65|eval(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:[A-Za-z0-9+/]+))
     patterns:
       true: |
         $e2afdc5b="\x62\x61\x73\x65\x36\64\137\x64\145\x63\x6f\x64\x65";
@@ -246,12 +246,14 @@ info:
 #      ?
 #   
 #    Simplify function catching:
-#       (?:["'`$(\s*/]{1,50})
+#       (?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
 #   
 #       hash  (   'sha1', 'hey');
 #          |-------|
 #       hash  ( /* */  'sha1', 'hey');
 #          |------------|
+#       hash  ( /* content content */  'sha1', 'hey');
+#          |----------------------------|
 #
 #    Variable names:
 #       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
