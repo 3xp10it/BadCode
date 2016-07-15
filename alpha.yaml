@@ -176,12 +176,12 @@ medium:
     patterns:
       true: |
         $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . (string)$_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
       false: |
         $dupe = $wpdb->get_results(      $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
   -
     for: php
-    description: Possible LFI / RFI (Wordpress)
+    description: Possible LFI / RFI
     status: STABLE
     check: |
       (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
