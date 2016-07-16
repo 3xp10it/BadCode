@@ -1,324 +1,219 @@
 ---
-high:
+php:
   -
-    for: php
-    description: Weak hashing algorithms used
-    status: STABLE
-    check: |
-      ((hash(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50}))*)(md5|sha1)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
-    patterns:
-      true: |
-        $beautiful = sha1(0 * rand(0, 50));
-        echo 'MyDataDevil RNG -> ' . hash('md5', md5($_SERVER['DOCUMENT_ROOT'] . $_SERVER['REQUEST_TIME_FLOAT']));
-        $test = hash  (  'sha1', 'hey');
-  -
-    for: php
-    description: Weak hashing algorithms used for passwords and secrets
-    status: UNSTABLE
-    check: |
-      (secret|password|pass|key)(?:.*)((hash(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50}))*)(md5|sha(1|256|384|512))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
-    patterns:
-      true: |
-        echo 'Here is your supersafe password' . hash('sha512', $_POST['password']);
-        $secret_key = hash('sha1'    , $_GET['username']);
-        $api_secret = md5('mysupersecret');
-        $password =     sha1('thisisapassword'   );
-  -
-    for: php
-    description: LFI / RFI (Strict)
-    status: STABLE
-    check: |
-      (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
-    patterns:
-      true: |
-        include $_GET['inject'];
-        include_once $_POST['file'];
-        include_once badsanitizer($_POST['file']);
-        include (  $_SERVER['REQUEST_URI']     );
-        require_once('/home/opt/database/' . $_COOKIE['city']);
-        require_once(      $_REQUEST['file'] . '.txt');
-        require_once      $_REQUEST['file'] . '.txt'
-      false: |
-        requireonce($_GET['file']);
-  -
-    for: php
-    description: CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
-    status: EXPERIMENTAL
-    flag: crlf
-    check: |
-      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
-  -
-    for: php
-    description: XSS vulnerabilities # Inspired by foospidy/GrepBugs
-    status: EXPERIMENTAL
-    check: |
-      (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
-  -
-    for: php
-    description: PHP Code / Object Execution (Strict)
-    status: UNSTABLE
-    flag: remoteexec
-    # Look behind is used here, workaround for Javascript needed
-    # Here we additionally check $_SESSION because these commands are very sensible and we don't want an attacker to use them if there is a way to manipulate the session
-    check: |
-      (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
-    patterns:
-      true: |
-        echo unserialize(stripslashes($_POST["awebvoice_data"]));
-        return unserialize($_COOKIE['token']);
-        $user_data = unserialize($_GET['data']);
-        assert('1 == ' . $_COOKIE['isValid'], 'This is valid!');
-        passthru('rm -rf ' . $_SERVER[REQUEST_URI], $err);
-        echo exec('ping ' . $_SERVER[REMOTE_ADDR]);
-        register_tick_function(   array(&$_GET, 'my_method'), true);
-      false: |
-        curl_exec($ch);
-        $session_data = unserialize($tmp[0]);
-        assert('2 < 1', 'Two is less than one');
-        register_shutdown_function('shutdown');
-        passthru("cat myfile.zip",$err);
-        echo exec('whoami');
-        $output = shell_exec('ls -lart');
-        pcntl_exec('/path/to/cmd');
-        $last_line = system('ls', $retval);
-        $last_line =system('ls', $retval);
-        $process = proc_open('php', $descriptorspec, $pipes, $cwd, $env);
-        eval("\$str = \"$str\";");
-        dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
-        register_tick_function('my_function', true);
-  -
-    for: php:wordpress
-    description: SQL Injection (Wordpress)
-    status: UNSTABLE
-    flag: sqli
-    check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
-    patterns:
-      true: |
-        $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
-        $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
-      false: |
-        $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
-        $wpdb->get_row ( $query );
-        $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
-        $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
-        $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   'SELECT *  FROM ' . $_GET[table] . ' $wpdb->test WHERE comment_post_ID =1 AND comment_author_url = %s', $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
-  -
-    for: php:wordpress
-    description: SQL Injection in prepared statement (Wordpress)
-    status: UNSTABLE
-    flag: sqli
-    check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
-    patterns:
-      true: |
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   'SELECT *  FROM ' . $_GET[table] . ' $wpdb->test WHERE comment_post_ID =1 AND comment_author_url = %s', $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
-      false: |
-        $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
-        $wpdb->get_row ( $query );
-        $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
-        $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
-        $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
-        $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
-        $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
-medium:
-  -
-    for: php
-    description: Unsafe cryptographic secure values generator
-    status: UNSTABLE
-    # Google Dork:
-    #   site:php.net This function does not generate cryptographically secure values, and should not be used for cryptographic purposes.
-    # Also, SQL RAND() is also detected in this check because it is not a cryptographically secure function
-    #   Source: https://stackoverflow.com/questions/35880963/does-mysql-have-a-cryptographically-secure-random-number-generator/35881049#35881049
-    check: |
-      (uniqid|((array|mt)_|s|)rand|str-shuffle|lcg-value)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
-    patterns:
-      true: |
-        uniqid('');
-        mysql_query('SELECT username FROM users WHERE id=RAND()');
-        echo str-shuffle("hello");
-        $mysecretnumber = rand ($_GET[SECRET_TOKEN], 100);
-  -
-    for: php:wordpress
-    description: Unsafe SQL query (Wordpress)
-    status: UNSTABLE
-    flag: sqli
-    check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
-    patterns:
-      true: |
-        $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
-        $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
-        $wpdb->get_row ( $query );
-      false: |
-        $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
-        $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
-  -
-    for: php:wordpress
-    description: Unsafe prepared SQL statement (Wordpress)
-    status: UNSTABLE
-    flag: sqli
-    check: |
-      \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
-    patterns:
-      true: |
-        $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
-        $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . (string)$_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
-      false: |
-        $dupe = $wpdb->get_results(      $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
-  -
-    for: php
-    description: Possible LFI / RFI
-    status: STABLE
-    check: |
-      (require|include)((_once)*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
-    patterns:
-      true: |
-        include $file;
-        include_once $file;
-        include (  $file);
-        require_once($file);
-        require_once $file
-        require   ($file  )
-  -
-    for: php
-    description: Possible PHP Code / Object Execution
-    status: UNSTABLE
-    flag: remoteexec
-    # Look behind is used here, workaround for Javascript needed
-    check: |
-      (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
-    patterns:
-      true: |
-        echo unserialize(stripslashes($_POST["awebvoice_data"]));
-        return unserialize($_COOKIE['token']);
-        $user_data = unserialize($_GET['data']);
-        $session_data = unserialize($tmp[0]);
-        assert('1 == ' . $_COOKIE['isValid'], 'This is valid!');
-        assert('2 < 1', 'Two is less than one');
-        passthru('rm -rf ' . $_SERVER[REQUEST_URI], $err);
-        passthru("cat myfile.zip",$err);
-        echo exec('whoami');
-        echo exec('ping ' . $_SERVER[REMOTE_ADDR]);
-        $output = shell_exec('ls -lart');
-        pcntl_exec('/path/to/cmd');
-        $last_line = system('ls', $retval);
-        $last_line =system('ls', $retval);
-        $process = proc_open('php', $descriptorspec, $pipes, $cwd, $env);
-        eval("\$str = \"$str\";");
-        dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
-        register_tick_function('my_function', true);
-        register_tick_function(   array(&$_GET, 'my_method'), true);
-        register_shutdown_function('shutdown');
-      false: |
-        curl_exec($ch);
-  -
-    for: php
-    description: Possible CRLF Injection / HTTP Response Splitting # Inspired by foospidy/GrepBugs
-    status: EXPERIMENTAL
-    flag: crlf
-    check: |
-      header(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:.*)\$
-  -
-    for: php
-    description: Possible informations leak # Inspired by foospidy/GrepBugs
-    status: STABLE
-    check: |
-      (((phpinfo|highlight_file|show_source)(\s*(["'`$(])*))|error_reporting(?:.*)E_(ALL|ERROR|WARNING|PARSE))(?:.*)\);
-    patterns:
-      true: |
-        highlight_file('index.php5');
-        phpinfo();
-        error_reporting(E_ALL & ~E_NOTICE);
-        highlight_file(    $_GET['myfile']);
+    # Files-related stuff
+    file:
+      -
+        inclusion.rl:
+          title: Remote and Local File Inclusion
+          description: |
+            The File Inclusion vulnerability allows an attacker to include a file, usually exploiting a "dynamic file inclusion" mechanisms implemented in the target application. The vulnerability occurs due to the use of user-supplied input without proper validation.
+            This can lead to something as outputting the contents of the file, but depending on the severity, it can also lead to:
+              * Code execution on the web server
+              * Code execution on the client-side such as JavaScript which can lead to other attacks such as cross site scripting (XSS)
+              * Denial of Service (DoS)
+              * Sensitive Information Disclosure
+            Remote File Inclusion (also known as RFI) is the process of including remote files through the exploiting of vulnerable inclusion procedures implemented in the application. This vulnerability occurs, for example, when a page receives, as input, the path to the file that has to be included and this input is not properly sanitized, allowing external URL to be injected. Although most examples point to vulnerable PHP scripts, we should keep in mind that it is also common in other technologies such as JSP, ASP and others.
+          confirmed:
+            status: UNSTABLE
+            danger: 9
+            check: |
+              ((require|include)((_once)*)|fopen|file_get_contents)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
+          possible:
+            status: UNSTABLE
+            danger: 7
+            check: |
+              ((require|include)((_once)*)|fopen|file_get_contents)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))
 
-low:
+    # Code execution stuff
+    remoteexec:
+      -
+        codeandobject:
+          title: PHP Code / Object Execution
+          description: |
+            No description yet
+          # Look behind is used here, workaround for Javascript needed
+          confirmed:
+            status: UNSTABLE
+            danger: 10
+            # Here we additionally check $_SESSION because these commands are very sensible and we don't want an attacker to use them if there is a way to manipulate the session
+            check: |
+              (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
+          possible:
+            status: UNSTABLE
+            danger: 8
+            check: |
+              (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
+      -
+        codeandobject.viaphpsapiname:
+          title: Possible PHP Code / Object Execution (predicted via php_sapi_name checks)
+          possible:
+            status: UNSTABLE
+            danger: 8
+            # Here we only allow cli / cli-server
+            # Names has been taken here: https://secure.php.net/possible/en/function.php-sapi-name.php
+            # The list is not exhaustive so we may add more names later
+            # php_sapi_name before 5.2.2 will output cgi instead of cli but who cares of these versions
+            #
+            # Regex (disassembled):
+            # (php_sapi_name(?:\()(.*)\))(?:[\S\s]*)((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})))
+            # (((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})(?:[\S\s]*)php_sapi_name(?:\()(.*)\))
+            check: |
+              ((php_sapi_name(?:\()(.*)\))(?:[\S\s]*)((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})))|(((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})(?:[\S\s]*)php_sapi_name(?:\()(.*)\)))
 
-info:
-  -
-    for: php
-    description: Network communications
-    status: EXPERIMENTAL
-    # Optimization for file_get_contents|fopen needed
-    # Regex for IPv6 / IPv4 for socket_connect
-    # fsockopen use ((ssl|tls):\/\/|)
-    check: |
-      (curl_exec|ftp_connect|ftp_ssl_connect|fsockopen|pfsockopen|socket_bind|socket_connect|socket_listen|socket_create_listen|socket_accept|socket_getpeername|socket_send)\s?\(((?:.*)\);
-      (file_get_contents|fopen)\s?\((?:.*)\);
-  -
-    for: php
-    description: Obfuscated code via base64
-    status: EXPERIMENTAL
-    check: |
-      # Fingerprinting of FOPO - Free Online PHP Obfuscator
-      (\\x62\\x61\\x73\\x65\\x36\\64\\137\\x64\\145\\x63\\x6f\\x64\\x65|eval(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})(?:[A-Za-z0-9+/]+))
-    patterns:
-      true: |
-        $e2afdc5b="\x62\x61\x73\x65\x36\64\137\x64\145\x63\x6f\x64\x65";
-        eval($e2afdc5b("Ly9OSXRYYy9JRXZla0NKcXFMbUEzODZWQUowcURqZjdDdng2S0RRYkRKditpVElDYWFRVU5WNlJJNXV
-        eval($e2afdc5b(SHELL_DEFINE
-        eval($e2afdc5b($test
-      false: |
-        eval($e2afdc5b("-----BEGIN RSA PRIVATE KEY-----
-        eval($-fail("-----BEGIN RSA PRIVATE KEY-----
+    # Headers-related stuff
+    header:
+      -
+        crlf:
+          title: CRLF Injection / HTTP Response Splitting
+          description: |
+            No description yet
+          confirmed:
+            status: EXPERIMENTAL
+            danger: 7
+            check: |
+              header(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
+          possible:
+            status: EXPERIMENTAL
+            danger: 5
+            check: |
+              header(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)(\$)
 
-# ToDo:
-#
-# - Detection of code comments to prevent false positive
-# - Check Session manipulation:
-#     SESSION[...$_(GET|POST...)] = $_(GET|POST...)[...]
-# - Check poor encryption https://secure.php.net/manual/en/function.crypt.php
-# - Check CSRF (Wordpress)
-#
-# Note:
-#
-#   Because of the regex limitations (?), we cannot verify variables in queries e.g.
-#   $quiz = $_REQUEST[quiz];
-#   $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$quiz'");
-#
-# Global regexes:
-#
-#    Detect if the line is a comment:
-#      ?
-#   
-#    Simplify function catching:
-#       (?:(["'`$(\s]|(\/\*(?:.*)\*\/)){1,50})
-#   
-#       hash  (   'sha1', 'hey');
-#          |-------|
-#       hash  ( /* */  'sha1', 'hey');
-#          |------------|
-#       hash  ( /* content content */  'sha1', 'hey');
-#          |----------------------------|
-#
-#    Variable names:
-#       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
-#       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})
-#   
-#       $awesome = supersecureclass::crypt('hi')
-#      |--------|
-#    
-#    Catch superglobal variables:
-#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
-#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
-#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
-#   
-#       $awesome = $_SERVER[REQUEST_URI];
-#       $awesome = $_SERVER['REQUEST_URI'];
-#                 |------------------------|
-#       $name = 'Name: ' . $_GET['name'];
-#                         |-----|
-#
+    # XSS stuff
+    xss:
+      -
+        description: |
+            Cross-Site Scripting (XSS) attacks are a type of injection, in which malicious scripts are injected into otherwise benign and trusted web sites. XSS attacks occur when an attacker uses a web application to send malicious code, generally in the form of a browser side script, to a different end user. Flaws that allow these attacks to succeed are quite widespread and occur anywhere a web application uses input from a user within the output it generates without validating or encoding it.
+            An attacker can use XSS to send a malicious script to an unsuspecting user. The end user’s browser has no way to know that the script should not be trusted, and will execute the script. Because it thinks the script came from a trusted source, the malicious script can access any cookies, session tokens, or other sensitive information retained by the browser and used with that site. These scripts can even rewrite the content of the HTML page. For more details on the different types of XSS flaws, see: Types of Cross-Site Scripting.
+        reflected:
+          title: Reflected XSS Attack
+          description: |
+            No description yet
+          confirmed:
+            status: EXPERIMENTAL
+            danger: 8
+            check: |
+              (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
+        stored:
+          # Stored XSS Attack
+        dom:
+          # DOM-based XSS Attack
+
+    # SQL-related stuff
+    sql:
+      -
+        sqli:
+          title: SQL Injection (Wordpress)
+          description: |
+            No description yet
+          flag: wordpress
+          confirmed:
+            status: UNSTABLE
+            danger: 9
+            check: |
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
+          possible:
+            status: UNSTABLE
+            danger: 8
+            check: |
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
+        sqli.prepared:
+          title: SQL Injection in prepared statement (Wordpress)
+          description: |
+            No description yet
+          flag: wordpress
+          confirmed:
+            status: UNSTABLE
+            danger: 9
+            check: |
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
+          possible:
+            status: UNSTABLE
+            danger: 8
+            check: |
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
+
+    # Crypto-related stuff
+    crypto:
+      -
+        weak.hash:
+          title: Weak hashing algorithms used
+          description: |
+            MD5 and SHA1 are broken in many ways so you should use at least SHA256 to hash datas (except passwords which must use a password-based key derivation function)
+          confirmed:
+            status: STABLE
+            danger: 5
+            check: |
+              ((hash(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+))*)(md5|sha1)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
+      -
+        weak.hash.secrets:
+          title: Weak hashing algorithms used for passwords and secrets
+          description: |
+            Computing power is evolving every days and simply hashing (even with a salt) is no longer recommended for passwords.
+            Please use a password-based key derivation function instead.
+          confirmed:
+            status: UNSTABLE
+            danger: 6
+            check: |
+              (secret|password|pass|key)(?:.*)((hash(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+))*)(md5|sha(1|256|384|512))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
+      -
+        weak.rng:
+          title: Unsafe cryptographic secure values generator
+          description: |
+            No description yet
+          confirmed:
+            # Google Dork:
+            #   site:php.net This function does not generate cryptographically secure values, and should not be used for cryptographic purposes.
+            status: UNSTABLE
+            danger: 4
+            # SQL RAND() is also detected in this check because it is not a cryptographically secure function
+            #   Source: https://stackoverflow.com/questions/35880963/does-mysql-have-a-cryptographically-secure-random-number-generator/35881049#35881049
+            check: |
+              (uniqid|((array|mt)_|s|)rand|str-shuffle|lcg-value)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
+
+    # Obfuscation-related stuff
+    obfuscation:
+      -
+        description: |
+            Backdoors and shells often use obfuscation to bypass AVs.
+            Obfuscated functions can contain code that BadCode cannot verify.
+        fopo:
+          title: Obfuscated code by FOPO - Free Online PHP Obfuscator
+          description: |
+            No description yet
+          confirmed:
+            status: STABLE
+            danger: 6
+            check: |
+              (\\x62\\x61\\x73\\x65\\x36\\64\\137\\x64\\145\\x63\\x6f\\x64\\x65|eval(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:[A-Za-z0-9+/]+))
+
+    network:
+      -
+        description: |
+          All commands that use network activity should be catched here.
+        activity:
+          title: Network communications
+          description: |
+            No description yet
+          confirmed:
+            status: EXPERIMENTAL
+            danger: 0
+            # Optimization and work here for
+            # Optimization file_get_contents|fopen
+            # - Regex for IPv6 / IPv4 for socket_connect
+            # - fsockopen use ((ssl|tls):\/\/|)
+            # (file_get_contents|fopen|mail|curl_exec|ftp_connect|ftp_ssl_connect|fsockopen|pfsockopen|socket_bind|socket_connect|socket_listen|socket_create_listen|socket_accept|socket_getpeername|socket_send)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
+            check: |
+              (file_get_contents|fopen|mail|curl_exec|ftp_connect|ftp_ssl_connect|fsockopen|pfsockopen|socket_bind|socket_connect|socket_listen|socket_create_listen|socket_accept|socket_getpeername|socket_send)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
+
+    leak:
+    -
+      activity:
+      title: Possible informations leak # Inspired by foospidy/GrepBugs
+      description: |
+        No description yet
+      confirmed:
+        status: UNSTABLE
+        danger: 3
+        check: |
+          ((phpinfo|highlight_file|show_source)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)|error_reporting(?:.*)E_(ALL|ERROR|WARNING|PARSE))(?:.*)\);

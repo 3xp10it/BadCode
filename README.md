@@ -23,7 +23,7 @@ This project aims to fingerprint every bad security practice and detect them in 
 
 **Note: This project won't save you from every security issues and especially intentionnal backdoor as the code can be obfuscated to bypass the detection.**
 
-### Want to help?
+### Contributing
 
 Any help is very appreciated, especially in these areas:
 

@@ -1,0 +1,237 @@
+# This file contain
+
+---
+php:
+  -
+    file:
+      -
+        inclusion.rl:
+          confirned:
+            true: |
+              include $_GET['inject'];
+              include_once $_POST['file'];
+              include_once badsanitizer($_POST['file']);
+              include (  $_SERVER['REQUEST_URI']     );
+              require_once('/home/opt/database/' . $_COOKIE['city']);
+              require_once(      $_REQUEST['file'] . '.txt');
+              require_once      $_REQUEST['file'] . '.txt'
+              $fp_temp   = fopen($_POST['avatar'], 'wb');
+              file_get_contents ('ftp://' . $_GET['test']);
+              file_get_contents('https://test.com/' . $_GET['test']);
+              if ($fp_local = fopen('https://test.com/' . $_COOKIE['file'], 'wb')) {
+              if ($fp_local = fopen($_GET['file'], 'wb')) {
+              return @file_get_contents($_GET['file']);
+            false: |
+              requireonce($_GET['file']);
+          possible:
+            true: |
+              include $_GET['inject'];
+              include_once $_POST['file'];
+              include_once badsanitizer($_POST['file']);
+              include (  $_SERVER['REQUEST_URI']     );
+              require_once('/home/opt/database/' . $_COOKIE['city']);
+              require_once(      $_REQUEST['file'] . '.txt');
+              require_once      $_REQUEST['file'] . '.txt'
+              $fp_temp   = fopen($_POST['avatar'], 'wb');
+              file_get_contents ('ftp://' . $_GET['test']);
+              file_get_contents('https://test.com/' . $_GET['test']);
+              if ($fp_local = fopen('https://test.com/' . $_COOKIE['file'], 'wb')) {
+              if ($fp_local = fopen($_GET['file'], 'wb')) {
+              return @file_get_contents($_GET['file']);
+            false: |
+              requireonce($_GET['file']);
+  -
+    remoteexec:
+      -
+        codeandobject:
+          confirmed:
+            true: |
+              echo unserialize(stripslashes($_POST["awebvoice_data"]));
+              return unserialize($_COOKIE['token']);
+              $user_data = unserialize($_GET['data']);
+              assert('1 == ' . $_COOKIE['isValid'], 'This is valid!');
+              passthru('rm -rf ' . $_SERVER[REQUEST_URI], $err);
+              echo exec('ping ' . $_SERVER[REMOTE_ADDR]);
+              register_tick_function(   array(&$_GET, 'my_method'), true);
+            false: |
+              curl_exec($ch);
+              $session_data = unserialize($tmp[0]);
+              assert('2 < 1', 'Two is less than one');
+              register_shutdown_function('shutdown');
+              passthru("cat myfile.zip",$err);
+              echo exec('whoami');
+              $output = shell_exec('ls -lart');
+              pcntl_exec('/path/to/cmd');
+              $last_line = system('ls', $retval);
+              $last_line =system('ls', $retval);
+              $process = proc_open('php', $descriptorspec, $pipes, $cwd, $env);
+              eval("\$str = \"$str\";");
+              dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
+              register_tick_function('my_function', true);
+          possible:
+            true: |
+              echo unserialize(stripslashes($_POST["awebvoice_data"]));
+              return unserialize($_COOKIE['token']);
+              $user_data = unserialize($_GET['data']);
+              $session_data = unserialize($tmp[0]);
+              assert('1 == ' . $_COOKIE['isValid'], 'This is valid!');
+              assert('2 < 1', 'Two is less than one');
+              passthru('rm -rf ' . $_SERVER[REQUEST_URI], $err);
+              passthru("cat myfile.zip",$err);
+              echo exec('whoami');
+              echo exec('ping ' . $_SERVER[REMOTE_ADDR]);
+              $output = shell_exec('ls -lart');
+              pcntl_exec('/path/to/cmd');
+              $last_line = system('ls', $retval);
+              $last_line =system('ls', $retval);
+              $process = proc_open('php', $descriptorspec, $pipes, $cwd, $env);
+              eval("\$str = \"$str\";");
+              dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
+              register_tick_function('my_function', true);
+              register_tick_function(   array(&$_GET, 'my_method'), true);
+              register_shutdown_function('shutdown');
+            false: |
+              curl_exec($ch);
+      -
+        codeandobject.viaphpsapiname:
+          possible:
+            true: |
+              # Example: Drupal - Coder - Highly Critical - Remote Code Execution - SA-CONTRIB-2016-039
+              ----
+              switch (php_sapi_name()) {
+                case 'apache':
+                case 'apache2handler': // This is the value when running curl.
+                  if (!isset($_GET['file'])) {
+              ----
+              if(php_sapi_name() == 'apache2handler') { $command = $_GET['cmd'] }
+              if('apache2handler' == php_sapi_name()) { $command = $_GET['cmd'] }
+              ----
+              switch (php_sapi_name()) {
+                case 'cli':
+                case 'caudium':
+              ----
+            false: |
+              ----
+              switch (php_sapi_name()) {
+                case 'cli':
+              ----
+              * php_sapi_name will not use apache2handler
+              * php_sapi_name() will not use fpm-fcgi!
+
+  -
+    header:
+      -
+        crlf:
+          confirmed:
+            true: |
+              header('Location: ' . $_GET['afterlogin']);
+          manual:
+            true: |
+              header('Location: ' . $_GET['afterlogin']);
+
+  -
+    sql:
+      -
+        sqli:
+          flag: wordpress
+          confirmed:
+            true: |
+              $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
+              $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
+            false: |
+              $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
+              $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
+              $wpdb->get_row ( $query );
+              $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
+              $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
+              $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
+              $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare  (   'SELECT *  FROM ' . $_GET[table] . ' $wpdb->test WHERE comment_post_ID =1 AND comment_author_url = %s', $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+          manual:
+            true: |
+              $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
+              $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
+              $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
+              $wpdb->get_row ( $query );
+            false: |
+              $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
+              $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+        sqli.prepared:
+          confirmed:
+            true: |
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare  (   'SELECT *  FROM ' . $_GET[table] . ' $wpdb->test WHERE comment_post_ID =1 AND comment_author_url = %s', $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
+            false: |
+              $fb_accounts = $wpdb->get_results("SELECT id, name FROM ".$this->tbl_fb_accounts, ARRAY_A);
+              $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts WHERE " . $id . "=true" );
+              $wpdb->get_row ( $query );
+              $wpdb->get_results( "SHOW CREATE TABLE $wpdb->table", ARRAY_N );
+              $db->get_var (    "SELECT COUNT(*) FROM {$wpdb->prefix}posts" );
+              $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
+              $wpdb->get_var("select count(id) from {$wpdb->prefix}posts p left join {$wpdb->prefix}linkit_cached_posts c on p.guid = c.guid where post_status = 'publish' and post_type = 'post' and (post_modified > '{$datetime}' or isnull(c.guid));");
+              $wpdb->get_results("SELECT ID, question FROM `wp_quiz_question` WHERE quiz_id='$_REQUEST[quiz]'");
+              $wpdb->get_row("select * from ".$this->tbl_tw_accounts." where id = ".$_POST['tw_account_id']);
+          possible:
+            true: |
+              $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
+              $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . (string)$_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
+            false: |
+              $dupe = $wpdb->get_results(      $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
+  -
+    crypto:
+      -
+        weak.hash:
+          confirmed:
+            true: |
+              $beautiful = sha1(0 * rand(0, 50));
+              echo 'MyDataDevil RNG -> ' . hash('md5', md5($_SERVER['DOCUMENT_ROOT'] . $_SERVER['REQUEST_TIME_FLOAT']));
+              $test = hash  (  'sha1', 'hey');
+      -
+        weak.secrets:
+          confirmed:
+            true: |
+              echo 'Here is your supersafe password' . hash('sha512', $_POST['password']);
+              $secret_key = hash('sha1'    , $_GET['username']);
+              $api_secret = md5('mysupersecret');
+              $password =     sha1('thisisapassword'   );
+
+        weak.rng:
+          confirmed:
+            true: |
+              uniqid('');
+              mysql_query('SELECT username FROM users WHERE id=RAND()');
+              echo str-shuffle("hello");
+              $mysecretnumber = rand ($_GET[SECRET_TOKEN], 100);
+  -
+    obfuscation:
+      -
+        fopo:
+          confirmed:
+            true: |
+              $e2afdc5b="\x62\x61\x73\x65\x36\64\137\x64\145\x63\x6f\x64\x65";
+              eval($e2afdc5b("Ly9OSXRYYy9JRXZla0NKcXFMbUEzODZWQUowcURqZjdDdng2S0RRYkRKditpVElDYWFRVU5WNlJJNXV
+              eval($e2afdc5b(SHELL_DEFINE
+              eval($e2afdc5b($test
+            false: |
+              eval($e2afdc5b("-----BEGIN RSA PRIVATE KEY-----
+              eval($-fail("-----BEGIN RSA PRIVATE KEY-----
+
+  -
+    network:
+
+  -
+    leak:
+    -
+      activity:
+        confirmed:
+            true: |
+              highlight_file('index.php5');
+              phpinfo();
+              error_reporting(E_ALL & ~E_NOTICE);
+              highlight_file(    $_GET['myfile']);
