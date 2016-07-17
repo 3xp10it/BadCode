@@ -1,6 +1,6 @@
 ## BadCode
 
-This project aims to fingerprint every bad security practice and detect them in opensource projects (3rd-party mostly).
+BadCode is a static source code scanner that fingerprints bad security practices and identify them.
 
 ![This screenshot shows a bunch of SQL injections in some Wordpress plugins by only using regex to detect them.](https://raw.githubusercontent.com/pwnsdx/BadCode/master/screenshot.png)
 
@@ -14,14 +14,14 @@ This project aims to fingerprint every bad security practice and detect them in 
 
 ### This is just the beginning
 
-- More regular expressions for PHP and Wordpress plugins (based on OWASP documentation) on its way
+- More regular expressions for PHP and Wordpress (based on OWASP documentation) in progress
 - Joomla! support is coming
 - Drupal support is coming
-- Many PHP frameworks support are coming too
+- Many PHP frameworks support are coming
 - CLI that check files automatically is coming too!
 - Other languages?
 
-**Note: This project won't save you from every security issues and especially intentionnal backdoor as the code can be obfuscated to bypass the detection.**
+**Note: This project won't save you from every security issues and especially intentional backdoor as the code can be obfuscated to bypass the detection.**
 
 ### Contributing
 
