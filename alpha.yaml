@@ -18,7 +18,7 @@ php:
             status: UNSTABLE
             danger: 9
             check: |
-              ((require|include)((_once)*)|fopen|file_get_contents)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
+              ((require|include)((_once)*)|fopen|file_get_contents)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER\[(?:.*HTTP_|.*QUERY_STRING|.*REQUEST_URI)|FILES\[(?:(?!.*tmp_name|.*size).*)])
           possible:
             status: UNSTABLE
             danger: 7
@@ -38,7 +38,7 @@ php:
             danger: 10
             # Here we additionally check $_SESSION because these commands are very sensible and we don't want an attacker to use them if there is a way to manipulate the session
             check: |
-              (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
+              (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER|FILES|SESSION)
           possible:
             status: UNSTABLE
             danger: 8
@@ -72,12 +72,12 @@ php:
             status: EXPERIMENTAL
             danger: 7
             check: |
-              header(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)(\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER))
+              header(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER\[(?:.*HTTP_|.*QUERY_STRING|.*REQUEST_URI)|FILES\[(?:(?!.*tmp_name|.*size).*)])
           possible:
             status: EXPERIMENTAL
             danger: 5
             check: |
-              header(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)(\$)
+              header(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$
 
     # XSS stuff
     xss:
@@ -93,7 +93,7 @@ php:
             status: EXPERIMENTAL
             danger: 8
             check: |
-              (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
+              (echo|((v|)print(_r|f|)|exit|die|var_dump|trigger_error|user_error|odbc_result_all|ovrimos_result_all|ifx_htmltbl_result))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?:.*)\$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER|FILES)
         stored:
           # Stored XSS Attack
         dom:
@@ -111,7 +111,7 @@ php:
             status: UNSTABLE
             danger: 9
             check: |
-              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER\[(?:.*HTTP_|.*QUERY_STRING|.*REQUEST_URI)|FILES\[(?:(?!.*tmp_name|.*size).*)])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
           possible:
             status: UNSTABLE
             danger: 8
@@ -126,7 +126,7 @@ php:
             status: UNSTABLE
             danger: 9
             check: |
-              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(?:.*)(?:((["'\]`]{1}))((([\s:),;])+)(\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER\[(?:.*HTTP_|.*QUERY_STRING|.*REQUEST_URI)|FILES\[(?:(?!.*tmp_name|.*size).*)])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(?:.*)(?:((["'\]`]{1}))((([\s:),;])+)(\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))
           possible:
             status: UNSTABLE
             danger: 8

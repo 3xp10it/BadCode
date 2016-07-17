@@ -6,7 +6,7 @@ php:
     file:
       -
         inclusion.rl:
-          confirned:
+          confirmed:
             true: |
               include $_GET['inject'];
               include_once $_POST['file'];
@@ -23,6 +23,8 @@ php:
               return @file_get_contents($_GET['file']);
             false: |
               requireonce($_GET['file']);
+              # tmp_name refers to the temporary path of the actual uploaded content so it is trustable
+              echo 'Your file has been uploaded locally to: ' . file_get_contents($_FILES['wp_custom_attachment']['tmp_name']);
           possible:
             true: |
               include $_GET['inject'];

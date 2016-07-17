@@ -40,6 +40,7 @@
 #      ?
 #
 #    Start of function catcher:
+#       # https://regex101.com/r/rE2kB1/7
 #       (?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
 #
 #       hash('sha1', 'hey');
@@ -97,10 +98,11 @@
 #       $awesome = supersecureclass::crypt('hi');
 #      |--------|
 #
-#    Superglobal variables catcher:
-#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
-#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
-#       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])
+#    Superglobal variables catcher: (the less to more restrictive)
+#       # https://regex101.com/r/vG4xZ1/31
+#       \$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER|FILES|SESSION)
+#       \$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER|FILES)
+#       \$_(?:GET|POST|COOKIE|REQUEST|ENV|SERVER\[(?:.*HTTP_|.*QUERY_STRING|.*REQUEST_URI)|FILES\[(?:(?!.*tmp_name|.*size).*)])
 #
 #       $awesome = $_SERVER[REQUEST_URI];
 #       $awesome = $_SERVER['REQUEST_URI'];
