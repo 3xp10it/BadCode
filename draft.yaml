@@ -7,7 +7,7 @@
 #   flag: drupal # When the entry is for a specific application/framework/cms, a flag must be set
 #   confirmed: # A regex that is supposed to be 80-100% sure that the issue is present
 #     status: STABLE # Status of the regex (EXPERIMENTAL|UNSTABLE|STABLE)
-#     danger: 5 # Dangerosity on a scale of 10
+#     danger: 5 # Dangerosity level on a scale of 10
 #     check: | # Regex should be here
 #       [...]
 #   possible: | # A regex that is supposed to be less than 79% sure that the issue is present (which require manual checking)
@@ -21,7 +21,7 @@
 # - crypto.weak.encryption: Check poor encryption https://secure.php.net/manual/en/function.crypt.php
 # - xss.stored and xss.dom: Work on it
 # - Check CSRF (Wordpress)
-# - Detection of vulnerable uploaders (files:)
+# - files.upload: Detection of vulnerable uploaders
 # - Check and fix Evil Regexes if any
 # - Add more obfuscation detection regexes
 #
@@ -39,7 +39,7 @@
 #    Detect if the line is a comment:
 #      ?
 #
-#    Simplify function catching:
+#    Start of function catcher:
 #       (?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
 #
 #       hash('sha1', 'hey');
@@ -74,11 +74,11 @@
 #       'sha1', 'hey');
 #       -|
 #
-#    Variable (end of string argument):
-#       (?:((["'`]{1}))(([\s:),;]){1})))
+#    Variable (end of arguments) catcher:
+#       (?:((["'\]`]{1}))((([\s:),;])+)(?:\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))
 #
 #       hash  (   'sha1', "hey");
-#                     |--|   |--|
+#                     |**|   |--|
 #
 #       case 'apache2handler':
 #                          |--|
@@ -86,19 +86,18 @@
 #       include 'thisfile';
 #                       |--|
 #
-#    Variable names:
+#       For sql.injection.prepared in this case:
+#       $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . (string)$_GET[table] . " $wpdb->test WHERE comment_post_ID = $_GET AND comment_author_url = " . $_POST['url'], $comment_author_url) );
+#                                                                      |**|                       |**|                                                                                 |---|
+#
+#    Variable names catcher:
 #       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
 #       \$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})
 #
 #       $awesome = supersecureclass::crypt('hi');
 #      |--------|
 #
-#    End of line:
-#       # For SQL
-#       (.*?["'`](?:\s*),)
-#
-#
-#    Catch superglobal variables:
+#    Superglobal variables catcher:
 #       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER|SESSION)
 #       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER)
 #       \$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])

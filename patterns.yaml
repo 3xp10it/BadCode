@@ -103,8 +103,8 @@ php:
                 case 'apache2handler': // This is the value when running curl.
                   if (!isset($_GET['file'])) {
               ----
-              if(php_sapi_name() == 'apache2handler') { $command = $_GET['cmd'] }
-              if('apache2handler' == php_sapi_name()) { $command = $_GET['cmd'] }
+              if(php_sapi_name() == 'apache2handler') { $command = $_GET['cmd']; }
+              if('apache2handler' == php_sapi_name()) { $command = $_GET['cmd']; }
               ----
               switch (php_sapi_name()) {
                 case 'cli':
@@ -115,6 +115,7 @@ php:
               switch (php_sapi_name()) {
                 case 'cli':
               ----
+              if('cli' == php_sapi_name()) { $command = $_GET['cmd']; }
               * php_sapi_name will not use apache2handler
               * php_sapi_name() will not use fpm-fcgi!
 
@@ -132,7 +133,7 @@ php:
   -
     sql:
       -
-        sqli:
+        injection:
           flag: wordpress
           confirmed:
             true: |
@@ -161,7 +162,7 @@ php:
               $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
               $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . $_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
               $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $comment_author_url) );
-        sqli.prepared:
+        injection.prepared:
           confirmed:
             true: |
               $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
@@ -182,7 +183,7 @@ php:
               $dupe = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = " . '$_REQUEST[quiz]' . " AND comment_author_url = %s", $comment_author_url) );
               $dupe = $wpdb->get_results( $wpdb->prepare  (   "SELECT *  FROM " . (string)$_GET[table] . " $wpdb->test WHERE comment_post_ID = " . '. " AND comment_author_url = %s", $comment_author_url) );
             false: |
-              $dupe = $wpdb->get_results(      $wpdb->prepare("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]) );
+              $dupe = $wpdb->get_results("SELECT * FROM $_GET[table] WHERE comment_post_ID = %d AND comment_author_url = %s", $comment_post_ID, $_REQUEST[quiz]);
   -
     crypto:
       -

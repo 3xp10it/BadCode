@@ -46,7 +46,7 @@ php:
               (unserialize|assert|passthru|(?<!curl_)(shell|pcntl|)exec|(\s|=)system|(expect_|)popen|proc_open|eval|dl|register_tick_function|register_shutdown_function)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)
       -
         codeandobject.viaphpsapiname:
-          title: Possible PHP Code / Object Execution (predicted via php_sapi_name checks)
+          title: PHP Code / Object Execution (predicted via php_sapi_name checks)
           possible:
             status: UNSTABLE
             danger: 8
@@ -56,10 +56,10 @@ php:
             # php_sapi_name before 5.2.2 will output cgi instead of cli but who cares of these versions
             #
             # Regex (disassembled):
-            # (php_sapi_name(?:\()(.*)\))(?:[\S\s]*)((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})))
-            # (((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})(?:[\S\s]*)php_sapi_name(?:\()(.*)\))
+            # (php_sapi_name(?:\()(?:.*)\))(?:[\S\s]*?)((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'\]`]{1}))((([\s:),;])+)(?:\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))
+            # ((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'\]`]{1}))((([\s:),;])+)(?:\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))(?:[\S\s]*?)php_sapi_name(?:\()(?:.*)\)
             check: |
-              ((php_sapi_name(?:\()(.*)\))(?:[\S\s]*)((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})))|(((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'`]{1}))(([\s:),;]){1})(?:[\S\s]*)php_sapi_name(?:\()(.*)\)))
+              (php_sapi_name(?:\()(?:.*)\))(?:[\S\s]*?)((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'\]`]{1}))((([\s:),;])+)(?:\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))|((aolserver|apache(?:(2(filter|handler))*)|caudium|cgi((-fcgi)*)|continuity|embed|fpm-fcgi|isapi|litespeed|milter|nsapi|phttpd|pi3web|roxen|thttpd|tux|webjames){1})(?:((["'\]`]{1}))((([\s:),;])+)(?:\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))(?:[\S\s]*?)php_sapi_name(?:\()(?:.*)\)
 
     # Headers-related stuff
     header:
@@ -102,7 +102,7 @@ php:
     # SQL-related stuff
     sql:
       -
-        sqli:
+        injection:
           title: SQL Injection (Wordpress)
           description: |
             No description yet
@@ -117,7 +117,7 @@ php:
             danger: 8
             check: |
               \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)(?!(.*)([a-zA-Z0-9_]{0,6})db->prepare)(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?;)
-        sqli.prepared:
+        injection.prepared:
           title: SQL Injection in prepared statement (Wordpress)
           description: |
             No description yet
@@ -126,12 +126,12 @@ php:
             status: UNSTABLE
             danger: 9
             check: |
-              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$_(GET|POST|FILES|COOKIE|REQUEST|ENV|SERVER\[("|'|`|)HTTP_(?:.*)\]|SERVER\[("|'|`|)(REQUEST_URI|QUERY_STRING)("|'|`|)\])(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(?:.*)(?:((["'\]`]{1}))((([\s:),;])+)(\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))
           possible:
             status: UNSTABLE
             danger: 8
             check: |
-              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(.*?["'`](?:\s*),)
+              \$(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})*)db->(get_([a-zA-Z0-9_]+))(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db->prepare(?:.*)\$(?!([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]{0,6})db)(?:.*)(?:((["'\]`]{1}))((([\s:),;])+)(\.([\s]+)\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*))
 
     # Crypto-related stuff
     crypto:
@@ -176,7 +176,7 @@ php:
       -
         description: |
             Backdoors and shells often use obfuscation to bypass AVs.
-            Obfuscated functions can contain code that BadCode cannot verify.
+            Obfuscated functions can contain code that BadCode cannot verify by using Regex.
         fopo:
           title: Obfuscated code by FOPO - Free Online PHP Obfuscator
           description: |
@@ -208,12 +208,13 @@ php:
 
     leak:
     -
-      activity:
-      title: Possible informations leak # Inspired by foospidy/GrepBugs
-      description: |
-        No description yet
-      confirmed:
-        status: UNSTABLE
-        danger: 3
-        check: |
-          ((phpinfo|highlight_file|show_source)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)|error_reporting(?:.*)E_(ALL|ERROR|WARNING|PARSE))(?:.*)\);
+      informations:
+        # Inspired by foospidy/GrepBugs
+        title: Possible informations leak
+        description: |
+          No description yet
+        confirmed:
+          status: UNSTABLE
+          danger: 3
+          check: |
+            ((phpinfo|highlight_file|show_source)(?:(?:["'`$(\s]|(\/\*(?:[\S\s][^\*\/]*)\*\/)|\/\*\*\/|((\/\/|#))(?:[\S\s][^"'`]*))+)|error_reporting(?:.*)E_(ALL|ERROR|WARNING|PARSE))(?:.*)\);
